@@ -1,0 +1,7 @@
+config global
+	option theme 'dark'             
+	option online_wallpaper 'none'  
+	option bing_background '0'       
+	option primary_color '#6759d4'   
+	option blur '1'                 
+	option animation '1'            
