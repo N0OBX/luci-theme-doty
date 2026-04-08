@@ -1,149 +1,145 @@
-{#
-	doty is a clean HTML5 theme for LuCI. It is based on luci-theme-bootstrap and MUI and doty Template
+<%#
+	Doty is a clean HTML5 theme for LuCI. It is based on luci-theme-material Doty Template
 
-	luci-theme-doty
-	Copyright 2020 Jerryk <jerrykuku@gmail.com>
+	luci-theme-Doty
+	Copyright 2026 Dotycat <dotycat@gmail.com>
 
-	Have a bug? Please create an issue here on GitHub!
-	https://github.com/jerrykuku/luci-theme-doty/issues
+	luci-theme-material:
+	Copyright 2015 Lutty Yang <lutty@wcan.in>
+-%>
+<%+themes/argon/out_header_login%>
+<%
+	local util		= require "luci.util"
+	local fs		= require "nixio.fs"
+	local nutil		= require "nixio.util"
+	local sys		= require "luci.sys"
+	local uci		= require "luci.model.uci".cursor()
 
-	luci-theme-bootstrap:
-	Copyright 2008 Steven Barth <steven@midlink.org>
-	Copyright 2008-2016 Jo-Philipp Wich <jow@openwrt.org>
-	Copyright 2012 David Menting <david@nut-bolt.nl>
+	local function glob(...)
+		local iter, code, msg = fs.glob(...)
+		if iter then
+			return nutil.consume(iter)
+		else
+			return nil, code, msg
+		end
+	end
 
-	MUI:
-	https://github.com/muicss/mui
+	local imageTypes = " jpg png gif webp jpeg "
+	local videoTypes = " mp4 webm "
+	local allTypes = imageTypes .. videoTypes
 
-	doty Theme
-	https://demos.creative-tim.com/doty-dashboard/index.html
+	local function fetchMedia(path, themeDir)
+		local backgroundTable = {}
+		local backgroundCount = 0
 
-	Licensed to the public under the Apache License 2.0
--#}
+		for i, f in ipairs(glob(path)) do
+			local attr = fs.stat(f)
+			if attr then
+				local ext = fs.basename(f):match(".+%.(%w+)$")
+				if ext ~= nil then
+					ext = ext:lower()
+				end
 
-{% include("themes/" + theme + "/out_header_login") %}
-{%
-	import * as fs from 'fs';
-	import { cursor } from 'uci';
-	import { rand } from 'math';
+				if ext ~= nil and string.match(allTypes, " " .. ext .. " ") ~= nil then
+					local bg = {}
+					bg.type = ext
+					bg.url = themeDir .. fs.basename(f)
+					table.insert(backgroundTable, bg)
+					backgroundCount = backgroundCount + 1
+				end
+			end
+		end
 
-	let cfg = cursor();
+		return backgroundTable, backgroundCount
+	end
 
-	//Fetch Local Background Media
+	local function selectBackground(themeDir)
+		local bgUrl = media .. "/img/bg1.jpg"
+		local backgroundType = "Image"
+		local mimeType = ""
 
-	const imageTypes = " jpg jpeg png gif webp ";
-	const videoTypes = " mp4 webm ";
-	const allTypes = imageTypes + videoTypes;
+		if fs.access("/etc/config/argon") then
+			local online_wallpaper = uci:get_first("argon", "global", "online_wallpaper")
+				or (uci:get_first("argon", "global", "bing_background") == "1" and "bing")
 
-	function fetchMedia(path, themeDir) {
-		let backgroundTable = [];
-		for (f in (fs.lsdir(path))) {
-			let ext = lc(split(f, '.')?.[1]);
-			if (ext && index(allTypes, " " + ext + " ") != -1) {
-				let bg = {};
-				bg.type = ext;
-				bg.url = themeDir + f;
-				push(backgroundTable, bg);
-			}
-		}
-		return backgroundTable;
-	}
+			if online_wallpaper and online_wallpaper ~= "none" then
+				local picurl = sys.exec("/usr/libexec/argon/online_wallpaper")
+				if picurl and picurl ~= "" then
+					return picurl, "Image", ""
+				end
+			end
+		end
 
-	function selectBackground(themeDir) {
-		let bgUrl = media + "/img/bg1.jpg";
-		let backgroundType = "Image";
-		let mimeType = "";
+		local backgroundTable, backgroundCount = fetchMedia("/www" .. themeDir .. "*", themeDir)
+		if backgroundCount > 0 then
+			local currentBg = backgroundTable[math.random(1, backgroundCount)]
+			bgUrl = currentBg.url
 
-		if (fs.access("/etc/config/doty")) {
-			let online_wallpaper = cfg.get_first('doty', 'global', 'online_wallpaper') ?? (cfg.get_first('doty', 'global', 'bing_background') == '1' ? 'bing' : null);
-			if (online_wallpaper && online_wallpaper != "none") {
-				const picurl = ubus.call("luci.doty_wallpaper", "get_url") ?? {};
-				if (picurl?.url) {
-					bgUrl = picurl.url;
-					return {bgUrl, backgroundType, mimeType};
-				}
-			}
-		}
+			if string.match(videoTypes, " " .. currentBg.type .. " ") ~= nil then
+				backgroundType = "Video"
+				mimeType = "video/" .. currentBg.type
+			end
+		end
 
-		let background = fetchMedia("/www" + themeDir, themeDir);
-		if ( length(background) > 0 ) {
-			let currentBg = background[(rand() % length(background))];
-			bgUrl = currentBg.url;
-			if (index(videoTypes, " " + currentBg.type + " ") != -1) {
-				backgroundType = "Video";
-				mimeType = "video/" + currentBg.type;
-			}
-		}
+		return bgUrl, backgroundType, mimeType
+	end
 
-		return {bgUrl, backgroundType, mimeType};
-	}
+	local boardinfo = util.ubus("system", "board")
+	local hostname = striptags(boardinfo.hostname or "?")
+	local themeDir = media .. "/background/"
+	local bgUrl, backgroundType, mimeType = selectBackground(themeDir)
+%>
 
-	const boardinfo = ubus.call("system", "board");
-	const hostname = striptags(boardinfo?.hostname ?? '?');
-	const themeDir = media + "/background/";
-	const bgArry = selectBackground(themeDir);
+<div class="login-page doty-login">
+<div class="login-page doty-login">
+	<div class="main-bg doty-bg" id="main-bg" style="background-image:url(<%=bgUrl%>)"></div>
+	<div class="doty-overlay"></div>
 
-%}
-<!-- Login Page Start -->
-<div class="login-page">
-	{% if ( bgArry.backgroundType == "Video" ): %}
-	<!-- Video Player Start -->
-	<div class="video">
-		<video autoplay loop muted id="video">
-			<source src="{{ bgArry.bgUrl }}" type="{{ bgArry.mimeType }}">
-		</video>
+	<div class="login-shell">
+		<div class="login-card">
+			<div class="login-card-inner">
+
+				<a class="brand doty-brand" href="/">
+					<span class="brand-logo-wrap">
+						<img src="<%=media%>/img/logo.png" class="icon brand-logo" />
+					</span>
+					<span class="brand-meta"> 
+						<span class="brand-host"><%=hostname%></span>
+					</span>
+				</a>
+
+				<div class="login-heading">
+					<h1><%:Welcome back%></h1>
+					<p><%:Sign in to manage your router%></p>
+				</div>
+
+				<form class="form-login doty-form" method="post" action="<%=pcdata(luci.http.getenv('REQUEST_URI'))%>">
+					<%- if fuser then %>
+					<div class="errorbox doty-error"><%:Invalid username and/or password! Please try again.%></div>
+					<% end -%>
+
+					<div class="doty-fields">
+						<div class="doty-field"> 
+							<div class="doty-input user-icon">
+								<input class="cbi-input-user" id="cbi-input-user" type="text" name="luci_username" value="<%=duser%>" placeholder="<%:Enter username%>" />
+							</div>
+						</div>
+
+						<div class="doty-field"> 
+							<div class="doty-input pass-icon">
+								<input class="cbi-input-password" id="cbi-input-password" type="password" name="luci_password" placeholder="<%:Enter password%>" />
+							</div>
+						</div>
+					</div>
+
+					<div class="doty-action">
+						<input type="submit" value="<%:Log in%>" class="cbi-button cbi-button-apply doty-submit" />
+					</div>
+				</form>
+
+			</div>
+		</div>
 	</div>
-	<div class="volume-control mute"></div>
-	<script>
-		document.querySelector(".volume-control").addEventListener("click", function(){
-			if(this.classList.contains("mute")){
-				this.classList.remove("mute");
-				document.getElementById("video").muted = false;
-			}else{
-				this.classList.add("mute");
-				document.getElementById("video").muted = true;
-			}
-		});
-	</script>
-	<!-- Video Player End -->
-	{% else %}
-	<!-- Image Background Start -->
-	<div class="main-bg" id="main-bg" style="background-image:url({{ bgArry.bgUrl }})"></div>
-	<!-- Image Background End -->
-	{% endif %}
-	<!-- Login Container Start -->
-	<div class="login-container">
-		<div class="login-form">
-			<!-- Logo Start -->
-			<a class="brand" href="/"><img src="{{ media }}/img/doty.svg" class="icon">
-				<span class="brand-text">{{ hostname }}</span>
-			</a>
-			<!-- Logo End -->
-			<!-- Login Form Start -->
-			<form class="form-login" method="post" action="{{ http.getenv("REQUEST_URI") }}">
+</div>
 
-				{%- if (fuser): %}
-				<div class="errorbox">{{ _('Invalid username and/or password! Please try again.') }}</div>
-				{% endif -%}
-
-				<div class="input-container">
-					<div class="input-group user-icon">
-						<input class="cbi-input-user" id="cbi-input-user" type="text" name="luci_username" value="{{ entityencode(duser, true) }}" />
-						<label class="border" for="cbi-input-user"></label>
-					</div>
-					<div class="input-group pass-icon">
-						<input class="cbi-input-password" id="cbi-input-password" type="password" name="luci_password" />
-						<label class="border" for="cbi-input-password"></label>
-					</div>
-				</div>
-				<div>
-					<input type="submit" value="{{ _('Log in') }}" class="cbi-button cbi-button-apply" />
-				</div>
-			</form>
-			<!-- Login Form End -->
-			<script type="text/javascript">//<![CDATA[
-				var input = document.getElementsByName('luci_password')[0];
-				if (input)
-					input.focus();
-			//]]></script>
-{% include("themes/" + theme + "/footer_login") %}
+<%+themes/argon/footer_login%>
