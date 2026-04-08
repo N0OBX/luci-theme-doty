@@ -1,4 +1,8 @@
 name: "Auto compile with OpenWrt SDK"
+
+permissions:
+  contents: write
+  
 on:
   repository_dispatch:
   workflow_dispatch:
