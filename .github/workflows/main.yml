@@ -9,11 +9,11 @@ on:
         default: "false"
   push:
     branches:
-      - "master"
+      - "main"
     paths:
       - "luci-theme-doty/Makefile"
 env:
-  TZ: Asia/Shanghai
+  TZ: Asia/Kuala_Lumpur
 
 jobs:
   job_check:
