@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ "$PKG_UPGRADE" != 1 ]; then
+	uci get luci.themes.Doty >/dev/null 2>&1 || \
+	uci batch <<-EOF
+		set luci.themes.Doty=/luci-static/doty
+		set luci.main.mediaurlbase=/luci-static/doty
+		commit luci
+	EOF
+fi
+
+exit 0

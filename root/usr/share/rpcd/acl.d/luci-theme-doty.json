@@ -1,0 +1,8 @@
+{
+    "luci-theme-doty": {
+        "description": "Grant UCI access for luci-theme-doty",
+        "read": {
+            "uci": [ "doty" ]
+        }
+    }
+}
