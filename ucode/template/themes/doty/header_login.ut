@@ -1,10 +1,11 @@
 <%#
-	doty is a clean HTML5 theme for LuCI. It is based on luci-theme-material doty Template
+	Doty is a clean HTML5 theme for LuCI. It is based on luci-theme-material Doty Template
 
-	luci-theme-doty
-	Copyright 2020 Jerrykuku <dotycat@gmail.com>
+	luci-theme-Doty
+	Copyright 2026 Dotycat <dotycat@gmail.com>
 
-	Licensed to the public under the Apache License 2.0
+	luci-theme-material:
+	Copyright 2015 Lutty Yang <lutty@wcan.in>
 -%>
 
 <%
@@ -21,6 +22,7 @@
 	local nutil = require "nixio.util"
 	local uci = require "luci.model.uci".cursor()
 
+	-- send as HTML5
 	http.prepare_content("text/html")
 
 	math.randomseed(tonumber(tostring(os.time()):reverse():sub(1, 9)))
@@ -28,19 +30,19 @@
 	local mode = "normal"
 	local bar_color = "#5e72e4"
 
-	local login_css = fs.readfile("/www/luci-static/doty/css/login.css") or ""
-	local login_dark_css = fs.readfile("/www/luci-static/doty/css/login_dark.css") or ""
+	local login_css = fs.readfile("/www/luci-static/argon/css/login_light.css") or ""
+	local login_dark_css = fs.readfile("/www/luci-static/argon/css/login_dark.css") or ""
 
 	local primary, dark_primary, blur_radius, blur_radius_dark, blur_opacity, blur_opacity_dark
 
-	if fs.access("/etc/config/doty") then
-		primary = uci:get_first("doty", "global", "primary")
-		dark_primary = uci:get_first("doty", "global", "dark_primary")
-		blur_radius = uci:get_first("doty", "global", "blur")
-		blur_radius_dark = uci:get_first("doty", "global", "blur_dark")
-		blur_opacity = uci:get_first("doty", "global", "transparency")
-		blur_opacity_dark = uci:get_first("doty", "global", "transparency_dark")
-		mode = uci:get_first("doty", "global", "mode") or "normal"
+	if fs.access("/etc/config/argon") then
+		primary = uci:get_first("argon", "global", "primary")
+		dark_primary = uci:get_first("argon", "global", "dark_primary")
+		blur_radius = uci:get_first("argon", "global", "blur")
+		blur_radius_dark = uci:get_first("argon", "global", "blur_dark")
+		blur_opacity = uci:get_first("argon", "global", "transparency")
+		blur_opacity_dark = uci:get_first("argon", "global", "transparency_dark")
+		mode = uci:get_first("argon", "global", "mode") or "normal"
 		bar_color = mode == "dark" and dark_primary or primary or bar_color
 	end
 
@@ -101,7 +103,7 @@
 
 		<%=active_login_css%>
 
-		<% if fs.access("/etc/config/doty") then %>
+		<% if fs.access("/etc/config/argon") then %>
 		:root {
 			--primary: <%=primary or "#5e72e4"%>;
 			--dark-primary: <%=dark_primary or "#483d8b"%>;
