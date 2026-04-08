@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@main
         with:
           fetch-depth: 0
-          ref: "master"
+          ref: "main"
 
       - name: Check version
         id: check_version
@@ -50,11 +50,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: For openwrt official Snapshots LuCI master
+          name: For openwrt official Snapshots LuCI main
           tag_name: ${{steps.check_version.outputs.latest_version}}
 
   job_build_doty:
-    name: Build doty (master)
+    name: Build doty (main)
     needs: job_check
     if: needs.job_check.outputs.has_update == 'true'
     runs-on: ubuntu-latest
@@ -84,16 +84,16 @@ jobs:
           mkdir sdk && tar --zstd -xvf $file_name -C ./sdk --strip-components=1
           cd sdk  
           echo "src-git base https://github.com/openwrt/openwrt.git;main" > feeds.conf
-          echo "src-git-full packages https://github.com/openwrt/packages.git;master" >> feeds.conf
-          echo "src-git-full luci https://github.com/openwrt/luci.git;master" >> feeds.conf
-          echo "src-git-full routing https://git.openwrt.org/feed/routing.git;master"  >> feeds.conf
-          git clone -b master https://github.com/${{ github.repository }}.git package/downloads/luci-theme-dotyn
+          echo "src-git-full packages https://github.com/openwrt/packages.git;main" >> feeds.conf
+          echo "src-git-full luci https://github.com/openwrt/luci.git;main" >> feeds.conf
+          echo "src-git-full routing https://git.openwrt.org/feed/routing.git;main"  >> feeds.conf
+          git clone -b main https://github.com/${{ github.repository }}.git package/downloads/luci-theme-dotyn
           ./scripts/feeds update -a
           echo "CONFIG_PACKAGE_luci-theme-doty=m" > .config
           ./scripts/feeds install -d n luci-theme-doty
           make download -j8
 
-      - name: Configure doty (master)
+      - name: Configure doty (main)
         run: |
           cd sdk
           ./scripts/feeds install luci-theme-doty
@@ -105,7 +105,7 @@ jobs:
           echo "CONFIG_PACKAGE_luci-theme-doty=m" >> .config
           make defconfig
 
-      - name: Compile doty (master)
+      - name: Compile doty (main)
         id: compile
         run: |
           cd sdk
@@ -117,7 +117,7 @@ jobs:
           echo "status=success" >> $GITHUB_OUTPUT
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
 
-      - name: Upload doty (master) ipks to release
+      - name: Upload doty (main) ipks to release
         uses: softprops/action-gh-release@v1
         if: steps.compile.outputs.status == 'success'
         env:
